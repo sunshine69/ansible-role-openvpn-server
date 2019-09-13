@@ -1,0 +1,27 @@
+#!/bin/sh
+
+#
+# Make a certificate/private key pair using a locally generated
+# root certificate.
+#
+
+if test $# -ne 1; then
+    echo "usage: build-key <name>";
+    exit 1
+fi
+
+if test $KEY_DIR; then
+    if [ -f $KEY_DIR/$1.key ]; then
+        echo "Key $KEY_DIR/$1.key already exists. dont re-generate."
+    else
+        openssl genrsa -rand /dev/urandom -out $KEY_DIR/$1.key 2048
+    fi
+# -batch - not prompt. Feed -subj so not to promtp too
+    cd $KEY_DIR && \
+    openssl req -days 3650 -new -key $1.key -out $1.csr -config $KEY_CONFIG -subj "/C=${KEY_COUNTRY}/ST=${KEY_PROVINCE}/L=${KEY_CITY}/O=${KEY_ORG}/OU=${ORG_UNIT}/CN=$1" && \
+    openssl ca -batch -days 3650 -out $1.crt -in $1.csr -config $KEY_CONFIG && \
+    chmod 0600 $1.key
+else
+    echo you must define KEY_DIR
+    exit 1
+fi

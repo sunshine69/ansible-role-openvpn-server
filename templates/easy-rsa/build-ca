@@ -1,0 +1,15 @@
+#!/bin/sh
+
+#
+# Build a root certificate
+#
+
+mkdir $KEY_DIR >/dev/null 2>&1
+
+if test $KEY_DIR; then
+    cd $KEY_DIR && \
+    openssl req -days 36500 -nodes -new -x509 -keyout ca.key -out ca.crt -subj "/C=${KEY_COUNTRY}/ST=${KEY_PROVINCE}/L=${KEY_CITY}/O=${KEY_ORG}/OU=${ORG_UNIT}/CN=$1" -config $KEY_CONFIG && \
+    chmod 0600 ca.key
+else
+    echo you must define KEY_DIR
+fi

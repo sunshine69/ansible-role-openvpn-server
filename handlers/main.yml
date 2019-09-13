@@ -1,0 +1,7 @@
+---
+# handlers file for ansible-role-openvpn-server
+- name: restart openvpn
+  service: name=openvpn state=restarted enabled=yes
+
+- name: reload systemd
+  shell: "systemctl daemon-reload"

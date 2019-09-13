@@ -1,0 +1,69 @@
+---
+# tasks file for ansible-role-openvpn-server
+- name: Install openvpn - Debian
+  apt: name=openvpn state=present
+  when: ansible_os_family == 'Debian'
+
+- name: Install openvpn - RedHat
+  yum: name=openvpn state=present
+  when: ansible_os_family == 'RedHat'
+
+- name: Deploy easy-rsa to remote
+  block:
+    - name: Create openvpn_script_dir
+      file:
+        path: "{{ openvpn_script_dir|default('/usr/local/openvpn_scripts') }}"
+        state: directory
+
+    - name: Find all dirs
+      find:
+        path: '{{ role_path }}/templates/easy-rsa'
+        file_type: directory
+        recurse: true
+      register: easy_rsa_out
+      connection: local
+
+    - name: Make sure openvpn scripts dir exist
+      file:
+        path: "{{ openvpn_script_dir|default('/usr/local/openvpn_scripts') }}/{{ item.path|dirname|replace(role_path ~ '/templates/', '') }}"
+        state: directory
+      with_items: "{{ easy_rsa_out.files }}"
+
+    - name: Find all files
+      find:
+        path: '{{ role_path}}/templates/easy-rsa'
+        file_type: file
+        recurse: true
+      register: easy_rsa_out
+      connection: local
+
+    - name: Deploy the easy-rsa files
+      template:
+        src: "{{ item.path }}"
+        dest: "{{ openvpn_script_dir|default('/usr/local/openvpn_scripts') }}/{{ item.path|replace(role_path ~ '/templates/', '') }}"
+        mode: preserve
+      with_items: "{{ easy_rsa_out.files }}"
+
+- name: Setup openvpn server from scratch
+  block:
+    - name: Gennerate server config
+      shell: |
+        cd {{ openvpn_script_dir|default('/usr/local/openvpn_scripts') }}/easy-rsa
+        . ./vars
+        RESET_OPENVPN={{ reset_config|default('n') }} ./gen-server-config-batch.sh
+
+    - name: Enable openvpn server
+      lineinfile:
+        path: /etc/default/openvpn
+        regexp: '^AUTOSTART="server"$'
+        line: 'AUTOSTART="server"'
+      notify:
+        - reload systemd
+        - restart openvpn
+
+- name: Update openvpn server config
+  template:
+    src: 'easy-rsa/vpn/server.conf'
+    dest: /etc/openvpn/server.conf
+  notify: restart openvpn
+
