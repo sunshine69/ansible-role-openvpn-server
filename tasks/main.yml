@@ -1,15 +1,37 @@
 ---
 # tasks file for ansible-role-openvpn-server
 - name: Install openvpn - Debian
-  apt: name=openvpn state=present
+  apt:
+    name:
+      - openvpn
+      - python3-pip
+      - python3-setuptools
+    state: present
   when: ansible_os_family == 'Debian'
 
 - name: Install openvpn - RedHat
-  yum: name=openvpn state=present
+  yum:
+    name:
+      - openvpn
+      - python3-pip
+      - python3-setuptools
+    state: present
   when: ansible_os_family == 'RedHat'
+
+- name: Install required python modules
+  pip:
+    name:
+      - 'pyotp'
+      - 'qrcode[pil]'
 
 - name: Deploy easy-rsa to remote
   block:
+    - name: Reset directory
+      file:
+        path: "{{ openvpn_script_dir|default('/usr/local/openvpn_scripts') }}/easy-rsa"
+        state: absent
+      when: reset_config|default('no') == 'yes'
+
     - name: Create openvpn_script_dir
       file:
         path: "{{ openvpn_script_dir|default('/usr/local/openvpn_scripts') }}"
@@ -19,13 +41,15 @@
       find:
         path: '{{ role_path }}/templates/easy-rsa'
         file_type: directory
+        excludes:
+          - '__pycache__'
         recurse: true
       register: easy_rsa_out
       connection: local
 
     - name: Make sure openvpn scripts dir exist
       file:
-        path: "{{ openvpn_script_dir|default('/usr/local/openvpn_scripts') }}/{{ item.path|dirname|replace(role_path ~ '/templates/', '') }}"
+        path: "{{ openvpn_script_dir|default('/usr/local/openvpn_scripts') }}/{{ item.path|replace(role_path ~ '/templates/', '') }}"
         state: directory
       with_items: "{{ easy_rsa_out.files }}"
 
@@ -33,6 +57,13 @@
       find:
         path: '{{ role_path}}/templates/easy-rsa'
         file_type: file
+        excludes:
+          - '*.db'
+          - '*.zip'
+          - '*gz'
+          - '*.tar'
+          - '*.pyc'
+          - '*.png'
         recurse: true
       register: easy_rsa_out
       connection: local
@@ -50,13 +81,13 @@
       shell: |
         cd {{ openvpn_script_dir|default('/usr/local/openvpn_scripts') }}/easy-rsa
         . ./vars
-        RESET_OPENVPN={{ reset_config|default('n') }} ./gen-server-config-batch.sh
+        RESET_OPENVPN={{ reset_config|default('no') }} ./gen-server-config-batch.sh
 
     - name: Enable openvpn server
       lineinfile:
         path: /etc/default/openvpn
-        regexp: '^AUTOSTART="server"$'
-        line: 'AUTOSTART="server"'
+        regexp: '^AUTOSTART="all"$'
+        line: 'AUTOSTART="all"'
       notify:
         - reload systemd
         - restart openvpn
@@ -67,3 +98,36 @@
     dest: /etc/openvpn/server.conf
   notify: restart openvpn
 
+- name: Create vpn users
+  shell: |
+    cd {{ openvpn_script_dir|default('/usr/local/openvpn_scripts') }}/easy-rsa
+    ./create_user.py -u '{{ item.username }}' -email '{{ item.email }}' -U '{{ item.reset|default("no") }}'
+  with_items: "{{ vpn_users|default([]) }}"
+  register: create_vpn_users
+
+- name: Parse output as list
+  set_fact:
+    vpn_users_out: "{{ create_vpn_users|json_query(q)|list }}"
+  vars:
+    q: 'results[*].stdout'
+
+- debug: var=vpn_users_out
+
+- name: Conver item into json
+  set_fact:
+    vpn_users_out_json: "{{ item|from_json }}"
+  with_items: "{{ vpn_users_out }}"
+  register: vpn_users_out2
+
+- set_fact:
+    vpn_users_info: "{{ vpn_users_out2|json_query(q) }}"
+  vars:
+    q: 'results[*].ansible_facts.vpn_users_out_json'
+
+- name: Create vpn users certificates
+  shell: |
+    cd {{ openvpn_script_dir|default('/usr/local/openvpn_scripts') }}/easy-rsa
+    ./gen-vpn.sh '{{ item.username }}' {{ item.reset|default('no') }}
+  with_items: '{{ vpn_users }}'
+
+- debug: var=vpn_users_info

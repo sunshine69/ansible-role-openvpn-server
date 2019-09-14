@@ -1,13 +1,12 @@
 #!/bin/bash -ex
 
 # start from this script
-source vars >/dev/null 2>&1
+source ./vars >/dev/null 2>&1
 
-if [ "$RESET_OPENVPN" = "y" ]; then
+if [ "$RESET_OPENVPN" = "yes" ] || [ ! -f 'keys/ca.key' ]; then
     ./clean-all
+	mkdir keys generated >/dev/null 2>&1 || true
 fi
-
-mkdir keys generated >/dev/null 2>&1 || true
 
 if [ ! -f keys/dh2048.pem ]; then
 	echo "Generate dh2048.pem key"
@@ -17,7 +16,7 @@ if [ ! -f keys/dh2048.pem ]; then
 fi
 
 if [ -f /etc/openvpn/server.conf ]; then
-	if [ "$RESET_OPENVPN" = "y" ]; then
+	if [ "$RESET_OPENVPN" = "yes" ]; then
 		echo "Going to remove existing openvpn config"
 		( cd /etc/openvpn/ && rm -f server.* ca.crt ta.key dh*.pem crl.pem )
         systemctl stop openvpn || true
@@ -27,8 +26,6 @@ fi
 if [ ! -f /etc/openvpn/server.conf ]; then
     yes | ./build-key-server server
     ./make-crl crl.pem
-    cp -a vpn/auth.py /etc/openvpn/scripts/
-    cp -a vpn/auth.py /etc/openvpn/scripts/
 	cp -a keys/crl.pem /etc/openvpn/crl.pem
 	cp -a vpn/server.conf /etc/openvpn/server.conf
 	cp -a keys/server.key /etc/openvpn/server.key
