@@ -45,6 +45,7 @@ if (not existing_user) or args.U == 'yes':
 
     img = qrcode.make(uri)
     img.save("generated/%s-qr.png" % args.u)
+    os.system("chmod 0600 generated/%s-qr.png" % args.u)
 
     print(json.dumps({'username': args.u, 'password': password, 'state': 'updated', 'email': args.email}, indent=4, sort_keys=True))
 

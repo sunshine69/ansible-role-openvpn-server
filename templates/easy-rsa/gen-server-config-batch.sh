@@ -6,6 +6,8 @@ source ./vars >/dev/null 2>&1
 if [ "$RESET_OPENVPN" = "yes" ] || [ ! -f 'keys/ca.key' ]; then
     ./clean-all
 	mkdir keys generated >/dev/null 2>&1 || true
+	chmod 0600 keys generated
+	chmod +s keys generated
 fi
 
 if [ ! -f keys/dh2048.pem ]; then

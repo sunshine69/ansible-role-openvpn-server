@@ -32,5 +32,6 @@ echo "<key>" >> generated/${1}.ovpn
 cat $KEY_DIR/$1.key >> generated/${1}.ovpn
 echo "</key>" >> generated/${1}.ovpn
 
+chmod 0600 generated/${1}.ovpn
 #useradd $1
 #echo "$1:$2" | chpasswd

@@ -8,7 +8,7 @@ import sqlite3, os
 import uuid, pyotp
 
 
-def password_gen(length=42):
+def password_gen(length=8):
     import string, secrets
     alphabet = string.ascii_letters + string.digits
     password = ''.join(secrets.choice(alphabet) for i in range(length))
@@ -38,10 +38,10 @@ def get_user(conn, username):
 def create_user(conn, username, email, auth_type='local', password=None, otp_password=None, otp_enabled=1):
     cur = conn.cursor()
     if not password:
-        password = password_gen()
+        password = password_gen(length=6)
     if not otp_password:
         otp_password = pyotp.random_base32()
-    
+
     try:
         cur.execute("""REPLACE INTO user(username, email, auth_type, password_hash, otp_password, otp_enabled)
             VALUES('{username}', '{email}', '{auth_type}', '{password_hash}', '{otp_password}', '{otp_enabled}')""".format(
@@ -97,7 +97,7 @@ def authenticate(conn, username, passphrase):
                     return totp.now() == otp_input
             else:
                 return check_password(user['password_hash'], passphrase)
-                
+
     return False
 
 
