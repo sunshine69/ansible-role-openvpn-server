@@ -83,14 +83,14 @@
         . ./vars
         RESET_OPENVPN={{ reset_config|default('no') }} ./gen-server-config-batch.sh
 
-    - name: Enable openvpn server
+    - name: Enable openvpn server at default file
       lineinfile:
         path: /etc/default/openvpn
         regexp: '^AUTOSTART="all"$'
         line: 'AUTOSTART="all"'
       notify:
         - reload systemd
-        - restart openvpn
+    - meta: flush_handlers
 
 - name: Update openvpn server config
   template:
