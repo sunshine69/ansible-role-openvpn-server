@@ -1,2 +1,40 @@
 ---
 # defaults file for ansible-role-openvpn-server
+
+# The remote localtion we store management scripts, easy-rsa and files
+# Default: /usr/local/openvpn_scripts
+# openvpn_script_dir: /usr/local/openvpn_scripts
+
+# List of vpn user to be created. The reset item is to reset the user with new
+# password and qr if set to yes
+
+# The qr image, profile will be generated in the server
+# openvpn_script_dir/easy-rsa/generated. You can sync this to your local and automate the email procedures in the playbook
+
+# If empty [] no users created. You can always add and re-run the role
+# vpn_users: []
+#  - username: <Username>
+#    email: <Email>
+#    reset: 'yes'
+
+# Route to push to client. Default is none
+# openvpn_push_routes: []
+
+# Push default gatew if you set it to true
+#openvpn_push_default_gw: true
+
+# The server name. Leve it empty it will use the public IP of the ec2 instance
+# if you launch using aws. Used in the client profile config to allow client to talk to server
+
+# openvpn_domain:
+
+# The private vpn network. Default is 192.168.10.0/24 you can select any from
+# 192.168.0.0/16 or any private class address provided that it does not
+# conflict with your current networks.
+#openvpn_network:
+
+# Protocol, default udp
+# openvpn_protocol: udp
+
+# Port default 1194
+# openvpn_port:
