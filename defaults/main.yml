@@ -31,7 +31,8 @@
 # The private vpn network. Default is 192.168.10.0/24 you can select any from
 # 192.168.0.0/16 or any private class address provided that it does not
 # conflict with your current networks.
-#openvpn_network:
+openvpn_network: '192.168.10.0'
+openvpn_netmask: '255.255.255.0'
 
 # Protocol, default udp
 # openvpn_protocol: udp

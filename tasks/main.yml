@@ -24,6 +24,36 @@
       - 'pyotp'
       - 'qrcode[pil]'
 
+- name: Modify firewall to allow packet forwarding
+  block:
+    - name: Enable ip forwarding
+      sysctl:
+        name: 'net.ipv4.ip_forward'
+        value: '1'
+
+    - name: uwf - Set DEFAULT_FORWARD_POLICY="ACCEPT"
+      lineinfile:
+        path: /etc/default/ufw
+        regexp: '^DEFAULT_FORWARD_POLICY=[^\s]*$'
+        line: 'DEFAULT_FORWARD_POLICY="ACCEPT"'
+      notify: reload ufw
+
+    - name: Deploy the *nat section in ufw config
+      blockinfile:
+        path: /etc/ufw/before.rules
+        insertafter: '^COMMIT$'
+        block: |
+          # NAT table rules
+          *nat
+          :POSTROUTING ACCEPT [0:0]
+          -A POSTROUTING -s {{ (openvpn_network ~ '/' ~ openvpn_netmask) | ipaddr('net') }} -o {{ ansible_default_ipv4.interface }} -j MASQUERADE
+          COMMIT
+
+    - name: Allow everything and enable UFW
+      ufw:
+        state: enabled
+        policy: allow
+
 - name: Deploy easy-rsa to remote
   block:
     - name: Reset directory

@@ -5,3 +5,6 @@
 
 - name: reload systemd
   shell: "systemctl daemon-reload"
+
+- name: reload ufw
+  ufw: state=reloaded
