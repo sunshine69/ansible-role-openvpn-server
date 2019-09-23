@@ -128,11 +128,22 @@
     dest: /etc/openvpn/server.conf
   notify: restart openvpn
 
+- name: Parsing vpn users from inventory
+  block:
+    - shell: "{{ role_path }}/templates/easy-rsa/parse-vpn-users.py {{ vpn_users_file }}"
+      register: vpn_users_file_out
+
+    - set_fact:
+        vpn_users_all: "{{ vpn_users + vpn_users_file_out.stdout|from_json|list }}"
+  when: vpn_users_file is defined and vpn_users_file
+  connection: local
+  become: false
+
 - name: Create vpn users
   shell: |
     cd {{ openvpn_script_dir|default('/usr/local/openvpn_scripts') }}/easy-rsa
-    ./create_user.py -u '{{ item.username }}' -email '{{ item.email }}' -U '{{ item.reset|default("no") }}'
-  with_items: "{{ vpn_users|default([]) }}"
+    ./create_user.py -u '{{ item.username }}' -email '{{ item.email }}' -U {{ vpn_reset_all_users_password|default(item.reset|default("no")) }} -state {{ item.state|default("present") }} -otp_enabled {{ item.otp_enabled|default(1) }} -auth_type {{ item.auth_type|default("local") }} -password_length {{ item.password_length|default(6) }}
+  with_items: "{{ vpn_users_all|default([]) }}"
   register: create_vpn_users
 
 - name: Parse output as list
@@ -158,6 +169,10 @@
   shell: |
     cd {{ openvpn_script_dir|default('/usr/local/openvpn_scripts') }}/easy-rsa
     ./gen-vpn.sh '{{ item.username }}' {{ item.reset|default('no') }}
-  with_items: '{{ vpn_users }}'
+  with_items: '{{ vpn_users_all }}'
 
+- name: make sure openvpn service is up
+  service: name=openvpn state=started enabled=yes
+
+# return vpn_users_info. Playbook can use it to sync remotely generated profile and qr image, and auto mailing these inforamtion to users
 - debug: var=vpn_users_info

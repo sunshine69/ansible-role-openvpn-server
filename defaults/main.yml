@@ -11,14 +11,34 @@
 # The qr image, profile will be generated in the server
 # openvpn_script_dir/easy-rsa/generated. You can sync this to your local and automate the email procedures in the playbook
 
-# If empty [] no users created. You can always add and re-run the role
-# vpn_users: []
-#  - username: <Username>
-#    email: <Email>
-#    reset: 'yes'
+# Set it to True to recycle password and QR for all users in the system regardless of the field `reset` in the `vpn_users` var below
+# vpn_reset_all_users_password: <yes|no>
 
-# Route to push to client. Default is none
-# openvpn_push_routes: []
+# This var is similar like above but also reset all - that means the all certificates, users password etc will be cleaned and re-generated.
+#reset_config: 'no'
+
+# vpn_users - List of users to be created. If empty [] no users created. You can always add and re-run the role
+# To recycle the vpn password and QR code, change the field `reset` (default is no).
+# To remove user, add and change field `state` to absent (default is present)
+vpn_users: []
+#  - username: <Username | required>
+#    email: <Email | required>
+#    reset: 'no'
+#    state: present
+
+
+# vpn_users_file - A path to a text file which can be used as a user list. The format is kind of free form - it will pick up the first email from the line from left to right to be used as email and use the first non space group match of the line as vpn username.
+# If the line has the word `reset` then the user will have the reset attributes set to yes
+# If the line has the word `delete` or `remove`, `absent` then the user will be removed
+# Users list parsed will be added to the previous vpn_users vars.
+# vpn_users_file: ""
+
+
+# Route to push to client. Default is empty list.
+# net_gateway field to set that the network wont be routed through vpn interface.
+# openvpn_push_routes:
+#  - route: "10.45.0.0 255.255.0.0"
+#    net_gateway: false
 
 # Push default gatew if you set it to true
 #openvpn_push_default_gw: true
@@ -35,7 +55,7 @@ openvpn_network: '192.168.10.0'
 openvpn_netmask: '255.255.255.0'
 
 # Protocol, default udp
-# openvpn_protocol: udp
+openvpn_protocol: udp
 
 # Port default 1194
-# openvpn_port:
+openvpn_port: 1194

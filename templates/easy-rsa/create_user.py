@@ -3,7 +3,7 @@
 import json
 import os
 import sqlite3
-from user_mngt import reset_database, create_user, get_user
+from user_mngt import reset_database, create_user, get_user, remove_user
 import argparse
 
 import pyotp
@@ -21,6 +21,8 @@ parser.add_argument("-otp_enabled", help="otp_enabled - 0/1", required=False, de
 parser.add_argument("-db_file", help="database file path", required=False, default='user.db')
 parser.add_argument("-reset_db", help="Reset the database", required=False, default='no')
 parser.add_argument("-U", help="Update existing user", required=False, default='no')
+parser.add_argument("-state", help="user state - can be present|absent", required=False, default='present')
+parser.add_argument("-password_length", help="password length for auto generated", type=int, required=False, default=6)
 
 args, conn = parser.parse_args(), None
 
@@ -33,9 +35,9 @@ else:
 
 existing_user = get_user(conn, args.u)
 
-if (not existing_user) or args.U == 'yes':
+if ((not existing_user) or args.U == 'yes') and args.state == 'present':
     password, otp_password = create_user(conn, args.u, email=args.email, auth_type=args.auth_type, \
-        password=args.p, otp_password=args.otp, otp_enabled=args.otp_enabled)
+        password=args.p, otp_password=args.otp, otp_enabled=args.otp_enabled, password_length=args.password_length)
 
     import socket
     hostname = socket.gethostname()
@@ -49,5 +51,7 @@ if (not existing_user) or args.U == 'yes':
 
     print(json.dumps({'username': args.u, 'password': password, 'state': 'updated', 'email': args.email}, indent=4, sort_keys=True))
 
+elif args.state == 'absent':
+    remove_user(conn, args.u)
 else:
     print(json.dumps({'username': args.u, 'password': 'N/A', 'state': 'existed', 'email': existing_user['email']}, indent=4, sort_keys=True))

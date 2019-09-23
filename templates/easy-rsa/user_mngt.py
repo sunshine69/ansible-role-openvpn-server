@@ -34,11 +34,15 @@ def get_user(conn, username):
     cur = conn.cursor()
     return cur.execute("SELECT * FROM user WHERE username = '{username}'".format(username=username)).fetchone()
 
+def remove_user(conn, username):
+    cur= conn.cursor()
+    cur.execute("DELETE FROM user WHERE username = '%s'" % username )
+    conn.commit()
 
-def create_user(conn, username, email, auth_type='local', password=None, otp_password=None, otp_enabled=1):
+def create_user(conn, username, email, auth_type='local', password=None, otp_password=None, otp_enabled=1, password_length=6):
     cur = conn.cursor()
     if not password:
-        password = password_gen(length=6)
+        password = password_gen(length=password_length)
     if not otp_password:
         otp_password = pyotp.random_base32()
 
