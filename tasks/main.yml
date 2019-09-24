@@ -139,6 +139,11 @@
   connection: local
   become: false
 
+- name: Set-fact vpn_users_all
+  set_fact:
+    vpn_users_all: "{{ vpn_users }}"
+  when: vpn_users_file is not defined or vpn_users_file == '' or vpn_users_file == None
+
 - name: Create vpn users
   shell: |
     cd {{ openvpn_script_dir|default('/usr/local/openvpn_scripts') }}/easy-rsa
