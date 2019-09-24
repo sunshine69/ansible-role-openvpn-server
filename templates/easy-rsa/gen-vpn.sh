@@ -9,6 +9,11 @@ source ./vars
 if [ -f "generated/$1.ovpn" ] && [ "$2" != 'yes' ]; then
     echo "User profile exist. Skiping ..."
     exit 0
+
+elif [ "$2" == 'yes' ]; then
+    rm -f "generated/$1.ovpn"
+    ./revoke-full $1
+   rm -f $KEY_DIR/$1.*
 fi
 
 yes | ./build-key $1

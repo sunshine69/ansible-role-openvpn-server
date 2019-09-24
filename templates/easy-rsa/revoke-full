@@ -23,8 +23,6 @@ if test $KEY_DIR; then
     cp -a $CRL /etc/openvpn/
     systemctl restart openvpn
 
-    userdel $1
-
     cat ca.crt $CRL >$RT
 
     # verify the revocation
