@@ -12,7 +12,7 @@ empty_or_commented_line_ptn = re.compile(r'(^[\s]*#.*|^[\s]*[\n]{0,1}$)')
 parse_email_pnt = re.compile(r"([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)")
 parse_username_ptn = re.compile(r"^([^\s\@]+)\s")
 parse_state_ptn = re.compile(r'\bstate=(remove|delete|absent)\b')
-parse_otp_ptn = re.compile(r'\botp_enabled=no\b')
+parse_otp_ptn = re.compile(r'\botp_enabled=(no|0|disabled)\b')
 parse_reset_ptn = re.compile(r'\breset\b')
 parse_password_length_ptn = re.compile(r'\bpassword_length=([\d]+)\b')
 
