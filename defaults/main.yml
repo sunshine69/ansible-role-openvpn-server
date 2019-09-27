@@ -29,7 +29,9 @@ vpn_users: []
 
 # vpn_users_file - A path to a text file which can be used as a user list. The format is kind of free form - it will pick up the first email from the line from left to right to be used as email and use the first non space group match of the line as vpn username.
 # If the line has the word `reset` then the user will have the reset attributes set to yes
-# If the line has the word `delete` or `remove`, `absent` then the user will be removed
+# If the line has the word `state=delete` or `state=remove`, `state=absent` then the user will be removed
+# List word you can add to the line is below. See the templates/easy-rsa/parse-vpn-users.py for complete pattern
+# otp_enabled=(no|0) password_length=42
 # Users list parsed will be added to the previous vpn_users vars.
 # vpn_users_file: ""
 
