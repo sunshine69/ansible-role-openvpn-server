@@ -39,6 +39,27 @@ def remove_user(conn, username):
     cur.execute("DELETE FROM user WHERE username = '%s'" % username )
     conn.commit()
 
+def reset_user_password(conn, username, password=None):
+    cur = conn.cursor()
+    if not password:
+        password = password_gen(length=password_length)
+    try:
+        sqlstmt = "UPDATE user set password_hash='{password_hash}' WHERE username='{username}'".format(
+                password_hash=hash_password(password),
+                username=username
+                )
+        cur.execute(sqlstmt)
+        conn.commit()
+    except Exception as e:
+        print(e)
+
+def find_user(conn, username_ptn):
+    cur = conn.cursor()
+    try:
+        sqlstmt = "SELECT * FROM user WHERE username like '%{username_ptn}%'".format(username_ptn=username_ptn)
+        cur.execute(sqlstmt)
+        print(cur.fetchall())
+
 def create_user(conn, username, email, auth_type='local', password=None, otp_password=None, otp_enabled=1, password_length=6):
     cur = conn.cursor()
     if not password:
