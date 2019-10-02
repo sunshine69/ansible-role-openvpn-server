@@ -70,6 +70,7 @@ def generate_qr_image(username, otp_password):
     import qrcode
 
     img = qrcode.make(uri)
+    os.system("rm -f generated/%s-qr.png" % username)
     img.save("generated/%s-qr.png" % username)
     os.system("chmod 0600 generated/%s-qr.png" % username)
 
