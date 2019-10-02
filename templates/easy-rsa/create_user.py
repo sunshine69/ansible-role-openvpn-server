@@ -3,7 +3,7 @@
 import json
 import os
 import sqlite3
-from user_mngt import reset_database, create_user, get_user, remove_user
+from user_mngt import reset_database, create_user, get_user, remove_user, generate_qr_image
 import argparse
 
 import pyotp
@@ -39,15 +39,7 @@ if ((not existing_user) or args.U == 'yes') and args.state == 'present':
     password, otp_password = create_user(conn, args.u, email=args.email, auth_type=args.auth_type, \
         password=args.p, otp_password=args.otp, otp_enabled=args.otp_enabled, password_length=args.password_length)
 
-    import socket
-    hostname = socket.gethostname()
-    uri = pyotp.TOTP(otp_password).provisioning_uri("%s@vpn-%s" % (args.u, hostname[-12:]))
-
-    import qrcode
-
-    img = qrcode.make(uri)
-    img.save("generated/%s-qr.png" % args.u)
-    os.system("chmod 0600 generated/%s-qr.png" % args.u)
+    generate_qr_image(args.u, otp_password)
 
     print(json.dumps({'username': args.u, 'password': password, 'state': 'updated', 'email': args.email}, indent=4, sort_keys=True))
 

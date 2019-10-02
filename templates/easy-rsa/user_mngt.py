@@ -59,6 +59,20 @@ def find_user(conn, username_ptn):
         sqlstmt = "SELECT * FROM user WHERE username like '%{username_ptn}%'".format(username_ptn=username_ptn)
         cur.execute(sqlstmt)
         print(cur.fetchall())
+    except Exception as e:
+        print(e)
+
+def generate_qr_image(username, otp_password):
+    import socket
+    hostname = socket.gethostname()
+    uri = pyotp.TOTP(otp_password).provisioning_uri("%s@vpn-%s" % (username, hostname[-12:]))
+
+    import qrcode
+
+    img = qrcode.make(uri)
+    img.save("generated/%s-qr.png" % username)
+    os.system("chmod 0600 generated/%s-qr.png" % username)
+
 
 def create_user(conn, username, email, auth_type='local', password=None, otp_password=None, otp_enabled=1, password_length=6):
     cur = conn.cursor()
