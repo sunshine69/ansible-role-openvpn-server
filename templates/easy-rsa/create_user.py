@@ -28,14 +28,14 @@ args, conn = parser.parse_args(), None
 
 db_file = args.db_file
 
-if not os.path.exists(db_file) or args.reset_db == 'yes':
+if not os.path.exists(db_file) or args.reset_db == 'yes' or args.reset_db == 'True':
     conn = reset_database(db_file)
 else:
     conn = sqlite3.connect(db_file)
 
 existing_user = get_user(conn, args.u)
 
-if ((not existing_user) or args.U == 'yes') and args.state == 'present':
+if ((not existing_user) or args.U == 'yes' or args.U == 'True') and args.state == 'present':
     password, otp_password = create_user(conn, args.u, email=args.email, auth_type=args.auth_type, \
         password=args.p, otp_password=args.otp, otp_enabled=args.otp_enabled, password_length=args.password_length)
 
