@@ -159,10 +159,11 @@
 
 - debug: var=vpn_users_out
 
-- name: Conver item into json
+- name: Convert item into json
   set_fact:
     vpn_users_out_json: "{{ item|from_json }}"
   with_items: "{{ vpn_users_out }}"
+  when: item and != ""
   register: vpn_users_out2
 
 - set_fact:
