@@ -11,7 +11,7 @@ data = open(input_file, 'r').readlines()
 empty_or_commented_line_ptn = re.compile(r'(^[\s]*#.*|^[\s]*[\n]{0,1}$)')
 parse_email_pnt = re.compile(r"([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)")
 parse_username_ptn = re.compile(r"^([^\s\@]+)\s")
-parse_state_ptn = re.compile(r'\bstate=(remove|delete|absent)\b')
+parse_state_ptn = re.compile(r'\bstate=(remove|delete|absent|reset)\b')
 parse_otp_ptn = re.compile(r'\botp_enabled=(no|0|disabled)\b')
 parse_reset_ptn = re.compile(r'\breset\b')
 parse_password_length_ptn = re.compile(r'\bpassword_length=([\d]+)\b')
@@ -33,8 +33,17 @@ for line in data:
     else: # Create user name from email
         username, _domain = email.split('@')
         username = username.lower()
+
     reset = 'yes' if parse_reset_ptn.search(line) else 'no'
-    state = 'absent' if parse_state_ptn.search(line) else 'present'
+
+    m = parse_state_ptn.search(line)
+    if m:
+        _state = m.group(1)
+        state = 'absent' if _state in ['remove', 'delete', 'absent'] else 'present'
+        reset = 'yes' if _state == 'reset' else 'no'
+    else:
+        state = 'present'
+
     otp_enabled = 0 if parse_otp_ptn.search(line) else 1
     m = parse_password_length_ptn.search(line)
     password_length = m.group(1) if m else 6
