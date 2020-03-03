@@ -76,6 +76,7 @@
         recurse: true
       register: easy_rsa_out
       connection: local
+      become: no
 
     - name: Make sure openvpn scripts dir exist
       file:
@@ -97,6 +98,7 @@
         recurse: true
       register: easy_rsa_out
       connection: local
+      become: no
 
     - name: Deploy the easy-rsa files
       template:
@@ -148,6 +150,10 @@
   shell: |
     cd {{ openvpn_script_dir|default('/usr/local/openvpn_scripts') }}/easy-rsa
     ./create_user.py -u '{{ item.username }}' -email '{{ item.email }}' -U {{ vpn_reset_all_users_password|default(item.reset|default("no")) }} -state {{ item.state|default("present") }} -otp_enabled {{ item.otp_enabled|default(1) }} -auth_type {{ item.auth_type|default("local") }} -password_length {{ item.password_length|default(6) }}
+    if [ '{{ item.state|default("present") }}' = 'absent' ] || [ '{{ item.state|default("present") }}' = 'remove' ]; then
+      . vars
+      ./revoke-full '{{ item.username }}' || true
+    fi
   with_items: "{{ vpn_users_all|default([]) }}"
   register: create_vpn_users
 
